@@ -3,6 +3,7 @@
 
 #include <windows.h>
 #include <iostream>
+#include <string>
 
 class SerialPort
 {
@@ -11,10 +12,10 @@ private:
     bool connected;
     COMSTAT status;
     DWORD errors;
-    const char* portName;
+    std::string portName;
     unsigned int baudRate;
 public:
-    SerialPort(const char* sPortName, unsigned long lBaudRate);
+    SerialPort(std::string sPortName, unsigned long lBaudRate);
     ~SerialPort();
 
     unsigned int initSerialPort();
@@ -22,6 +23,19 @@ public:
     bool writeSerialPort(char* buffer, unsigned int buf_size);
     bool isConnected();
     void closeSerial();
+};
+
+
+class LedDeviceFinder
+{
+private:
+    const char* deviceName;
+
+public:
+    LedDeviceFinder(const char* sDeviceName);
+    ~LedDeviceFinder();
+
+    bool FindConnectedDevice(std::string &data);
 };
 
 #endif // SERIALPORT_H

@@ -1,6 +1,6 @@
 #include "SerialPort.h"
 
-SerialPort::SerialPort(const char* sPortName, unsigned long lBaudRate)
+SerialPort::SerialPort(std::string sPortName, unsigned long lBaudRate)
 {
     this->handler = nullptr;
     this->connected = false;
@@ -23,13 +23,13 @@ SerialPort::~SerialPort()
 
 unsigned int SerialPort::initSerialPort()
 {
-    this->handler = CreateFileA(static_cast<LPCSTR>(portName), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    this->handler = CreateFileA(static_cast<LPCSTR>(portName.c_str()), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
     if (this->handler == INVALID_HANDLE_VALUE)
     {
         if (GetLastError() == ERROR_FILE_NOT_FOUND)
         {
-            std::cout << "ERROR: Handle was not attached.Reason : " + std::string(portName) + "not available." << std::endl;
+            std::cout << "ERROR: Handle was not attached.Reason : " + portName + "not available." << std::endl;
             return 1;
         }
         else
@@ -127,4 +127,48 @@ bool SerialPort::isConnected()
 void SerialPort::closeSerial()
 {
     CloseHandle(this->handler);
+}
+
+
+
+
+
+
+LedDeviceFinder::LedDeviceFinder(const char* sDeviceName)
+{
+    this->deviceName = sDeviceName;
+}
+
+LedDeviceFinder::~LedDeviceFinder()
+{
+}
+
+bool LedDeviceFinder::FindConnectedDevice(std::string &data)
+{
+    bool bDeviceFound = false;
+    char targetName[5000] = {'\0'};
+
+    /* Check all available COM ports */
+    for (unsigned int portCount = 0; portCount < 255; portCount++)
+    {
+        /* Get COM port name */
+        std::string portNameTmp = "COM" + std::to_string(portCount);
+        DWORD result = QueryDosDevice(portNameTmp.c_str(), targetName, 5000);
+
+        if (result)
+        {
+            /* COM port found */
+            if (strcmp(this->deviceName, targetName) == 0)
+            {
+                data = "\\\\.\\" + portNameTmp;
+                bDeviceFound = true;
+            }
+        }
+        else
+        {
+            /* Do nothing */
+        }
+    }
+
+    return bDeviceFound;
 }
