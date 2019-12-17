@@ -1,60 +1,35 @@
 #include "SerialPort.h"
-#include <string>
-#include <windows.h>
-#include <stdio.h>
-#include <tchar.h>
-#include <string.h>
-#include <psapi.h>
-#include <strsafe.h>
 
-#define BUFSIZE 512
-
-
-bool SelectComPort() //added function to find the present serial 
-{
-    char lpTargetPath[10000]; // buffer to store the path of the COMPORTS
-    bool gotPort = false; // in case the port is not found
-
-    for (int i = 0; i < 255; i++) // checking ports from COM0 to COM255
-    {
-        std::string str = "COM" + std::to_string(i); // converting to COM0, COM1, COM2
-        LPCWSTR tst = LPCWSTR(str.c_str());
-
-        DWORD test = QueryDosDevice(str.c_str(), lpTargetPath, 5000);
-
-        // Test the return value and error if any
-        if (test != 0) //QueryDosDevice returns zero if it didn't find an object
-        {
-            std::cout << str << ": " << lpTargetPath << std::endl;
-            gotPort = true;
-        }
-
-        if (::GetLastError() == ERROR_INSUFFICIENT_BUFFER)
-        {
-        }
-    }
-
-    return gotPort;
-}
 
 int main()
 {
     unsigned int err = 0;
-    const char* comPortName = "\\\\.\\COM5";
+    const char* deviceName = "\\Device\\Silabser0";
+    bool dfound = false;
+    std::string comPortName;
 
-    char buffer[6] = "test\n";
-    char output[6] = {'\0'};
+    LedDeviceFinder* ldf = new LedDeviceFinder(deviceName);
 
-    std::string portName = "\\\\.\\COM5";
-   
-    SelectComPort();
-    //SerialPort* port = new SerialPort(comPortName, 115200);
+    dfound = ldf->FindConnectedDevice(comPortName);
 
-    //err = port->initSerialPort();
+    if (dfound)
+    {
+        /* Create COM port object */
+        SerialPort* port = new SerialPort(comPortName, 115200);
+        /* Initialize COM port */
+        err = port->initSerialPort();
 
-    //err = port->writeSerialPort(buffer, strlen(buffer));
+        /* Do operations with COM port... */
+        //err = port->writeSerialPort(buffer, strlen(buffer));
+        //err = port->readSerialPort(output, sizeof(output) / sizeof(char));
 
-    //err = port->readSerialPort(output, sizeof(output) / sizeof(char));
+        /* Release COM port object in the end */
+        delete port;
+    }
+    else
+    {
+        std::cout << "Device not found." << std::endl;
+    }
 
-    //delete port;
+    delete ldf;
 }
