@@ -20,7 +20,7 @@ bool SelectComPort() //added function to find the present serial
         std::string str = "COM" + std::to_string(i); // converting to COM0, COM1, COM2
         LPCWSTR tst = LPCWSTR(str.c_str());
 
-        DWORD test = QueryDosDevice(tst, LPWSTR(lpTargetPath), 5000);
+        DWORD test = QueryDosDevice(str.c_str(), lpTargetPath, 5000);
 
         // Test the return value and error if any
         if (test != 0) //QueryDosDevice returns zero if it didn't find an object
