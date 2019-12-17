@@ -1,0 +1,10 @@
+# Add all to ignore folders here !!!
+Debug/
+Release/
+Ambient/Debug/
+Ambient/Release/
+.vs/
+
+# Add all files to ignore here !!!
+Ambient/Ambient.vcxproj.filters
+
