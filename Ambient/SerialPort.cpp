@@ -146,29 +146,29 @@ LedDeviceFinder::~LedDeviceFinder()
 bool LedDeviceFinder::FindConnectedDevice(std::string &data)
 {
     bool bDeviceFound = false;
-    char targetName[5000] = {'\0'};
+    //char targetName[5000] = {'\0'};
 
-    /* Check all available COM ports */
-    for (unsigned int portCount = 0; portCount < 255; portCount++)
-    {
-        /* Get COM port name */
-        std::string portNameTmp = "COM" + std::to_string(portCount);
-        DWORD result = QueryDosDevice(portNameTmp.c_str(), targetName, 5000);
+    ///* Check all available COM ports */
+    //for (unsigned int portCount = 0; portCount < 255; portCount++)
+    //{
+    //    /* Get COM port name */
+    //    std::string portNameTmp = "COM" + std::to_string(portCount);
+    //    DWORD result = QueryDosDevice(portNameTmp.c_str(), targetName, 5000);
 
-        if (result)
-        {
-            /* COM port found */
-            if (strcmp(this->deviceName, targetName) == 0)
-            {
-                data = "\\\\.\\" + portNameTmp;
-                bDeviceFound = true;
-            }
-        }
-        else
-        {
-            /* Do nothing */
-        }
-    }
+    //    if (result)
+    //    {
+    //        /* COM port found */
+    //        if (strcmp(this->deviceName, targetName) == 0)
+    //        {
+    //            data = "\\\\.\\" + portNameTmp;
+    //            bDeviceFound = true;
+    //        }
+    //    }
+    //    else
+    //    {
+    //        /* Do nothing */
+    //    }
+    //}
 
     return bDeviceFound;
 }
