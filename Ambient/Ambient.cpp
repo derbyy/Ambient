@@ -1,9 +1,7 @@
 #include "SerialPort.h"
-#include <d3d9.h>
-
-
-
 #include <chrono>
+#include <vector>
+#include <fstream>
 
 class Timer
 {
@@ -35,43 +33,107 @@ private:
 };
 
 
-void CaptureImage()
+bool SaveImage(const std::string& szPathName, void* lpBits, int w, int h) 
+{
+    // Create a new file for writing
+    std::ofstream pFile(szPathName, std::ios_base::binary);
+    if (!pFile.is_open()) {
+        return false;
+    }
+
+    BITMAPINFOHEADER bmih;
+    bmih.biSize = sizeof(BITMAPINFOHEADER);
+    bmih.biWidth = w;
+    bmih.biHeight = h;
+    bmih.biPlanes = 1;
+    bmih.biBitCount = 24;
+    bmih.biCompression = BI_RGB;
+    bmih.biSizeImage = w * h * 3;
+
+    BITMAPFILEHEADER bmfh;
+    int nBitsOffset = sizeof(BITMAPFILEHEADER) + bmih.biSize;
+    LONG lImageSize = bmih.biSizeImage;
+    LONG lFileSize = nBitsOffset + lImageSize;
+    bmfh.bfType = 'B' + ('M' << 8);
+    bmfh.bfOffBits = nBitsOffset;
+    bmfh.bfSize = lFileSize;
+    bmfh.bfReserved1 = bmfh.bfReserved2 = 0;
+
+    // Write the bitmap file header
+    pFile.write((const char*)&bmfh, sizeof(BITMAPFILEHEADER));
+    UINT nWrittenFileHeaderSize = pFile.tellp();
+
+    // And then the bitmap info header
+    pFile.write((const char*)&bmih, sizeof(BITMAPINFOHEADER));
+    UINT nWrittenInfoHeaderSize = pFile.tellp();
+
+    // Finally, write the image data itself
+    //-- the data represents our drawing
+    pFile.write((const char*)lpBits, bmih.biSizeImage);
+    UINT nWrittenDIBDataSize = pFile.tellp();
+    pFile.close();
+
+    return true;
+}
+
+void imageProcess()
 {
     BITMAP bmpScreen;
+    byte* bitPointer;
+    unsigned long red = 0, green = 0, blue = 0, alpha = 0, size = 0;
 
     /* Retrieve the handle to a display device context for the client area of the window. */
-    HDC hdcScreen = GetDC(NULL);
+    HDC hScreenDC = GetDC(NULL);
 
     /* Create a compatible DC which is used in a BitBlt from the window DC */
-    HDC hdcMemDC = CreateCompatibleDC(hdcScreen);
+    HDC hMemoryDC = CreateCompatibleDC(hScreenDC);
 
-    int width = 200;// GetDeviceCaps(hdcScreen, HORZRES);
-    int height = 200;// GetDeviceCaps(hdcScreen, VERTRES);
+    /* Set number of pixel to x and y axis */
+    int horizontal = 120;
+    int vertical = 120;
 
-        
-    HBITMAP hbmScreen = CreateCompatibleBitmap(hdcScreen, width, height);
+    BITMAPINFO bitmap;
+    bitmap.bmiHeader.biSize = sizeof(bitmap.bmiHeader);
+    bitmap.bmiHeader.biWidth = horizontal;
+    bitmap.bmiHeader.biHeight = vertical;
+    bitmap.bmiHeader.biPlanes = 1;
+    bitmap.bmiHeader.biBitCount = 24;
+    bitmap.bmiHeader.biCompression = BI_RGB;
+    bitmap.bmiHeader.biSizeImage = 0;
+    bitmap.bmiHeader.biClrUsed = 0;
+    bitmap.bmiHeader.biClrImportant = 0;
 
-    SelectObject(hdcMemDC, hbmScreen);
+    size = unsigned long(vertical * ((horizontal * 3 + 3) & 0xFFFFFFFC));
 
-    BitBlt(hdcMemDC, 0, 0, width, height, hdcScreen, 0, 0, SRCCOPY);
+    HBITMAP hBitMap = CreateDIBSection(hMemoryDC, &bitmap, DIB_RGB_COLORS, (void**)(&bitPointer), NULL, NULL);
+    SelectObject(hMemoryDC, hBitMap);
 
-    GetObject(hbmScreen, sizeof(BITMAP), &bmpScreen);
+    //while (true)
+    //{
+        Timer timer("inside while");
+        BitBlt(hMemoryDC, 0, 0, horizontal, vertical, hScreenDC, 120, 0, SRCCOPY);
 
-    DeleteDC(hdcMemDC);
-    DeleteDC(hdcScreen);
+        SaveImage("obr.bmp", bitPointer, horizontal, vertical);
+
+        for (int i = 0; i < size; i += 4)
+        {
+            red += unsigned long(bitPointer[i]);
+            green += unsigned long(bitPointer[i + 1]);
+            blue += unsigned long(bitPointer[i + 2]);
+        }
+
+        red = red / (horizontal * vertical);
+        green = green / (horizontal * vertical);
+        blue = blue / (horizontal * vertical);
+    //}
 }
 
-void test(HDC screen, HDC mem, int width, int height)
-{
-    BITMAP bmpScreen;
 
-    HBITMAP hbmScreen = CreateCompatibleBitmap(screen, width, height);
-    SelectObject(mem, hbmScreen);
 
-    BitBlt(mem, 0, 0, width, height, screen, 0, 0, SRCCOPY);
 
-    GetObject(hbmScreen, sizeof(BITMAP), &bmpScreen);
-}
+
+
+
 
 
 
@@ -79,26 +141,13 @@ void test(HDC screen, HDC mem, int width, int height)
 
 int main()
 {
-
-
-    HDC hdcScreen = GetDC(NULL);
-    HDC hdcMemDC = CreateCompatibleDC(hdcScreen);
-
-    for (int i = 0; i < 10; i++)
-    {
-        {
-            //Timer timer("CaptureImage");
-            CaptureImage();
-        }
-    }
-
-
-
-
-
-
-
-
+    //for (int i = 0; i < 100; i++)
+    //{
+    //    {
+            //Timer timer("imageProcess");
+            imageProcess();
+    //    }
+    //}
 
     //unsigned int err = 0;
     //const char* deviceName = "\\Device\\Silabser0";
