@@ -1,35 +1,23 @@
 #include "SerialPort.h"
 
-
 int main()
 {
     unsigned int err = 0;
-    const char* deviceName = "\\Device\\Silabser0";
-    bool dfound = false;
-    std::string comPortName;
+    char buffer[5] = { '\0' };
+    char out_buffer[50] = { '\0' };
 
-    LedDeviceFinder* ldf = new LedDeviceFinder(deviceName);
+    /* Create COM port object */
+    SerialPort port(115200);
 
-    dfound = ldf->FindConnectedDevice(comPortName);
+    /* Initialize COM port */
+    err = port.initSerialPort();
 
-    if (dfound)
+    if (err == 0)
     {
-        /* Create COM port object */
-        SerialPort* port = new SerialPort(comPortName, 115200);
-        /* Initialize COM port */
-        err = port->initSerialPort();
+        buffer[0] = 'a';
 
         /* Do operations with COM port... */
-        //err = port->writeSerialPort(buffer, strlen(buffer));
-        //err = port->readSerialPort(output, sizeof(output) / sizeof(char));
-
-        /* Release COM port object in the end */
-        delete port;
+        err = port.writeSerialPort(buffer, sizeof(buffer) / sizeof(char));
+        err = port.readSerialPort(out_buffer, sizeof(out_buffer) / sizeof(char));
     }
-    else
-    {
-        std::cout << "Device not found." << std::endl;
-    }
-
-    delete ldf;
 }
